@@ -32,7 +32,7 @@ class App(object):
             [0,0,0,1]
         ])
         X,Y,U,V = zip(*arr)
-        self.ax.quiver(X,Y,U,V,angles='xy',scale_units='xy',scale=1)
+        self.ax.quiver(X,Y,U,V,angles='xy',scale_units='xy',scale=1, color='rgb')
 
         self.ax.set_xlim([-1.2, 1.2])
         self.ax.set_ylim([-1.2, 1.2])
