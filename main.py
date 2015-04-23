@@ -25,23 +25,7 @@ class App(object):
         self.figure = Figure(figsize=(5,4), dpi=100)
         self.ax = self.figure.add_subplot(111,aspect='equal')
 
-        # self.ax.plot([], [])
-
-        arr = np.array([
-            [0,0,1,0],
-            [0,0,0,1]
-        ])
-        X,Y,U,V = zip(*arr)
-        self.ax.quiver(X,Y,U,V,angles='xy',scale_units='xy',scale=1, color='rgb')
-
-        self.ax.set_xlim([-1.2, 1.2])
-        self.ax.set_ylim([-1.2, 1.2])
-        self.ax.spines['left'].set_position('zero')
-        self.ax.spines['right'].set_color('none')
-        self.ax.spines['bottom'].set_position('zero')
-        self.ax.spines['top'].set_color('none')
-        self.ax.get_xaxis().set_ticks([])
-        self.ax.get_yaxis().set_ticks([])
+        self._init_axes()
 
         # Canvas
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.master)
@@ -55,32 +39,101 @@ class App(object):
         self.step_button.pack(side=Tk.RIGHT)
         self.reset_button = Tk.Button(master=self.master, text='Reset', command=self._reset)
         self.reset_button.pack(side=Tk.RIGHT)
-        self.entry_s = Tk.Spinbox(master=self.master)
-        self.entry_s.pack(side=Tk.RIGHT)
-        self.label_s = Tk.Label(master=self.master, text='  s:')
-        self.label_s.pack(side=Tk.RIGHT)
+        self.entry_t = Tk.Spinbox(master=self.master)
+        self.entry_t.pack(side=Tk.RIGHT)
+        self.label_t = Tk.Label(master=self.master, text='  |t|:')
+        self.label_t.pack(side=Tk.RIGHT)
         self.entry_N = Tk.Spinbox(master=self.master)
         self.entry_N.pack(side=Tk.RIGHT)
         self.label_N = Tk.Label(master=self.master, text='  N:')
         self.label_N.pack(side=Tk.RIGHT)
+
+        # State
+        self.state = 0
+
+    def _init_axes(self):
+        self.ax.clear()
+        arr = np.array([
+            [0,0,1,0],
+            [0,0,0,1]
+        ])
+        X,Y,U,V = zip(*arr)
+        self.ax.quiver(X,Y,U,V,angles='xy',scale_units='xy',scale=1)
+
+        self.ax.set_xlim([-1.2, 1.2])
+        self.ax.set_ylim([-1.2, 1.2])
+        self.ax.spines['left'].set_position('zero')
+        self.ax.spines['right'].set_color('none')
+        self.ax.spines['bottom'].set_position('zero')
+        self.ax.spines['top'].set_color('none')
+        self.ax.get_xaxis().set_ticks([])
+        self.ax.get_yaxis().set_ticks([])
 
     def _quit(self):
         self.master.quit()
         self.master.destroy()
 
     def _step(self):
-        print('Step')
+        self._init_axes()
+
+        if self.state == 0: # The vector |psi> (initial)
+            try:
+                N = float(self.entry_N.get())
+                self.entry_N.configure(state='disabled')
+            except ValueError:
+                print "Please enter a number"
+                return
+
+            self.theta = np.arcsin(1.0/np.sqrt(N))
+            x = np.cos(self.theta)
+            y = np.sin(self.theta)
+            arr = np.array([
+                [0,0,x,y]
+            ])
+            X,Y,U,V = zip(*arr)
+            self.quiver = self.ax.quiver(X,Y,U,V,angles='xy',scale_units='xy',scale=1,color='rgb')
+            self.state = 2
+        elif self.state == 1: # Drawing the new vector |psi>
+            x = np.cos(self.theta)
+            y = np.sin(self.theta)
+            arr = np.array([
+                [0,0,x,y]
+            ])
+            X,Y,U,V = zip(*arr)
+            self.quiver = self.ax.quiver(X,Y,U,V,angles='xy',scale_units='xy',scale=1,color='rgb')
+            self.state = 2
+        elif self.state == 2: # Drawing the vectors |psi>, F|psi>
+            x = np.cos(self.theta)
+            y = np.sin(self.theta)
+            arr = np.array([
+                [0,0,x,y],
+                [0,0,x,-y]
+            ])
+            X,Y,U,V = zip(*arr)
+            self.quiver = self.ax.quiver(X,Y,U,V,angles='xy',scale_units='xy',scale=1,color='rgb')
+            self.state = 3
+        elif self.state == 3: # Drawing the vectors |psi>, F|psi>, WF|psi>
+            x = np.cos(self.theta)
+            y = np.sin(self.theta)
+            x2 = np.cos(self.theta * 3)
+            y2 = np.sin(self.theta * 3)
+            arr = np.array([
+                [0,0,x,y],
+                [0,0,x,-y],
+                [0,0,x2,y2]
+            ])
+            X,Y,U,V = zip(*arr)
+            self.quiver = self.ax.quiver(X,Y,U,V,angles='xy',scale_units='xy',scale=1,color='rgb')
+            self.theta *= 3
+            self.state = 1
+
+        self.canvas.draw()
 
     def _reset(self):
-        # self.ax.clear()
-        # a_2 = self.figure.add_subplot(111)
-        # t_2 = arange(0.0,3.0,0.01)
-        # s_2 = cos(2*pi*t_2)
-
-        # a_2.plot(t_2,s_2)
-        # self.ax = a_2
-        # self.canvas.draw()
-        print('Reset')
+        self.entry_N.configure(state='normal')
+        self.state = 0
+        self._init_axes()
+        self.canvas.draw()
 
 def main():
     root = Tk.Tk()
