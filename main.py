@@ -27,29 +27,36 @@ class App(object):
 
         self._init_axes()
 
+        # Counter
+        self.str = Tk.StringVar()
+        self.str.set('Iteration count:')
+        self.label_count = Tk.Label(master=self.master, textvariable=self.str)
+        self.label_count.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
+
         # Canvas
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.master)
         self.canvas.show()
         self.canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
 
-        # Buttons
-        self.quit_button = Tk.Button(master=self.master, text='Quit', command=self._quit)
-        self.quit_button.pack(side=Tk.RIGHT)
-        self.step_button = Tk.Button(master=self.master, text='Step', command=self._step)
-        self.step_button.pack(side=Tk.RIGHT)
-        self.reset_button = Tk.Button(master=self.master, text='Reset', command=self._reset)
-        self.reset_button.pack(side=Tk.RIGHT)
-        self.entry_t = Tk.Spinbox(master=self.master)
-        self.entry_t.pack(side=Tk.RIGHT)
-        self.label_t = Tk.Label(master=self.master, text='  |t|:')
-        self.label_t.pack(side=Tk.RIGHT)
-        self.entry_N = Tk.Spinbox(master=self.master)
-        self.entry_N.pack(side=Tk.RIGHT)
+        # Entries & Buttons
         self.label_N = Tk.Label(master=self.master, text='  N:')
-        self.label_N.pack(side=Tk.RIGHT)
+        self.label_N.pack(side=Tk.LEFT)
+        self.entry_N = Tk.Spinbox(master=self.master)
+        self.entry_N.pack(side=Tk.LEFT)
+        self.label_t = Tk.Label(master=self.master, text='  |t|:')
+        self.label_t.pack(side=Tk.LEFT)
+        self.entry_t = Tk.Spinbox(master=self.master)
+        self.entry_t.pack(side=Tk.LEFT)
+        self.reset_button = Tk.Button(master=self.master, text='Reset', command=self._reset)
+        self.reset_button.pack(side=Tk.LEFT)
+        self.step_button = Tk.Button(master=self.master, text='Step', command=self._step)
+        self.step_button.pack(side=Tk.LEFT)
+        self.quit_button = Tk.Button(master=self.master, text='Quit', command=self._quit)
+        self.quit_button.pack(side=Tk.LEFT)
 
         # State
         self.state = 0
+        self.iteration = 1
 
     def _init_axes(self):
         self.ax.clear()
@@ -79,12 +86,15 @@ class App(object):
         if self.state == 0: # The vector |psi> (initial)
             try:
                 N = float(self.entry_N.get())
+                t = float(self.entry_t.get())
                 self.entry_N.configure(state='disabled')
+                self.entry_t.configure(state='disabled')
             except ValueError:
                 print "Please enter a number"
                 return
 
-            self.theta = np.arcsin(1.0/np.sqrt(N))
+            self.str.set('Iteration Count: ' + str(self.iteration))
+            self.theta = np.arcsin(np.sqrt(t/N))
             x = np.cos(self.theta)
             y = np.sin(self.theta)
             arr = np.array([
@@ -94,6 +104,7 @@ class App(object):
             self.quiver = self.ax.quiver(X,Y,U,V,angles='xy',scale_units='xy',scale=1,color='rgb')
             self.state = 2
         elif self.state == 1: # Drawing the new vector |psi>
+            self.str.set('Iteration Count: ' + str(self.iteration))
             x = np.cos(self.theta)
             y = np.sin(self.theta)
             arr = np.array([
@@ -126,11 +137,14 @@ class App(object):
             self.quiver = self.ax.quiver(X,Y,U,V,angles='xy',scale_units='xy',scale=1,color='rgb')
             self.theta *= 3
             self.state = 1
+            self.iteration += 1
 
         self.canvas.draw()
 
     def _reset(self):
+        self.iteration = 1
         self.entry_N.configure(state='normal')
+        self.entry_t.configure(state='normal')
         self.state = 0
         self._init_axes()
         self.canvas.draw()
